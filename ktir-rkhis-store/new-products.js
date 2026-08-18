@@ -58,3 +58,16 @@ window.PRODUCTS.push({
   tags_en: ["Digital keypad", "Steel body", "For valuables"],
   tags_ar: ["قفل رقمي", "هيكل حديد", "لحفظ المقتنيات"]
 });
+
+window.PRODUCTS.push({
+  code: "999155",
+  price: 48,
+  category: "kitchen",
+  image: "assets/999155.jpg",
+  name_en: "2-in-1 Electric Barbecue Grill",
+  name_ar: "شواية باربيكيو كهربائية 2 في 1",
+  desc_en: "Practical electric barbecue grill that can be used on a table or with its stand, ideal for grilling meat, chicken, vegetables and more at home.",
+  desc_ar: "شواية باربيكيو كهربائية عملية يمكن استخدامها على الطاولة أو مع القاعدة، مناسبة لشواء اللحوم والدجاج والخضار بسهولة في المنزل.",
+  tags_en: ["2-in-1", "Adjustable heat", "Electric grill"],
+  tags_ar: ["2 في 1", "حرارة قابلة للتعديل", "شواية كهربائية"]
+});
