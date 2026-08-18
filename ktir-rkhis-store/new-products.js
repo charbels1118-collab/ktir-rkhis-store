@@ -45,3 +45,15 @@ window.PRODUCTS.push({
   tags_en: ["Resistance training", "Full body", "Home workout"],
   tags_ar: ["تمارين مقاومة", "تمارين للجسم", "للمنزل"]
 });
+
+window.PRODUCTS.push({
+  code: "999151",
+  price: 99,
+  category: "home",
+  name_en: "Digital Steel Safe",
+  name_ar: "خزنة حديد رقمية",
+  desc_en: "Compact steel safe with a digital keypad and rotary handle for storing cash, documents, jewelry and other valuables at home or in the office.",
+  desc_ar: "خزنة حديد مدمجة مع لوحة أرقام إلكترونية ومقبض دوّار لحفظ النقود والمستندات والمجوهرات والمقتنيات المهمة في المنزل أو المكتب.",
+  tags_en: ["Digital keypad", "Steel body", "For valuables"],
+  tags_ar: ["قفل رقمي", "هيكل حديد", "لحفظ المقتنيات"]
+});
