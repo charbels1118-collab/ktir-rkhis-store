@@ -33,3 +33,15 @@ window.PRODUCTS.push({
   tags_en: ["Complete set", "Accessories included", "Glass base"],
   tags_ar: ["طقم كامل", "مع العدة", "قاعدة زجاج"]
 });
+
+window.PRODUCTS.push({
+  code: "999065",
+  price: 56,
+  category: "wellness",
+  name_en: "Resistance Fitness Exercise Board",
+  name_ar: "أداة رياضية لتمارين المقاومة",
+  desc_en: "Compact resistance exercise board with handle and bands for simple full-body workouts, stretching and strengthening at home.",
+  desc_ar: "أداة رياضية مدمجة لتمارين المقاومة مع مقبض وأشرطة، مناسبة لتمارين الجسم البسيطة والشد وتقوية العضلات في المنزل.",
+  tags_en: ["Resistance training", "Full body", "Home workout"],
+  tags_ar: ["تمارين مقاومة", "تمارين للجسم", "للمنزل"]
+});
