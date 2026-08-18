@@ -21,3 +21,15 @@ window.PRODUCTS.push({
   tags_en: ["26 cm", "Frying basket", "Glass lid"],
   tags_ar: ["26 سم", "مصفاة للقلي", "غطاء زجاج"]
 });
+
+window.PRODUCTS.push({
+  code: "999139",
+  price: 36,
+  category: "home",
+  name_en: "Hookah Set with Accessories",
+  name_ar: "أرجيلة مع العدة",
+  desc_en: "Complete hookah set with hose, glass base, tray and accessories in a practical ready-to-use style.",
+  desc_ar: "أرجيلة كاملة مع الخرطوم والقاعدة الزجاجية والصحن والعدة اللازمة بتصميم عملي وجاهز للاستعمال.",
+  tags_en: ["Complete set", "Accessories included", "Glass base"],
+  tags_ar: ["طقم كامل", "مع العدة", "قاعدة زجاج"]
+});
