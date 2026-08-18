@@ -50,6 +50,7 @@ window.PRODUCTS.push({
   code: "999151",
   price: 99,
   category: "home",
+  image: "assets/999151.svg",
   name_en: "Digital Steel Safe",
   name_ar: "خزنة حديد رقمية",
   desc_en: "Compact steel safe with a digital keypad and rotary handle for storing cash, documents, jewelry and other valuables at home or in the office.",
