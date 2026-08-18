@@ -24,6 +24,7 @@
   const t = (en, ar) => lang === "ar" ? ar : en;
   const money = n => `${C.currency || "$"}${Number(n).toFixed(Number(n)%1?2:0)}`;
   const prodByCode = code => P.find(p => p.code === code);
+  const imageFor = p => p.image || `assets/${p.code}.png`;
 
   function saveCart(){
     localStorage.setItem("ktir_cart", JSON.stringify(cart));
@@ -97,7 +98,7 @@
     $("#productsGrid").innerHTML = list.length ? list.map(p => `
       <article class="product-card">
         <div class="image-wrap">
-          <img src="assets/${p.code}.png" alt="${lang==="ar"?p.name_ar:p.name_en}" loading="lazy">
+          <img src="${imageFor(p)}" alt="${lang==="ar"?p.name_ar:p.name_en}" loading="lazy">
           <span class="code-badge">${p.code}</span>
         </div>
         <div class="product-body">
@@ -143,7 +144,7 @@
     $("#cartItems").innerHTML = entries.length ? entries.map(([code,qty]) => {
       const p = prodByCode(code);
       return `<div class="cart-item">
-        <img src="assets/${code}.png" alt="">
+        <img src="${imageFor(p)}" alt="">
         <div>
           <h4>${lang==="ar"?p.name_ar:p.name_en}</h4>
           <small>${t("Code","الكود")}: ${code} • ${money(p.price)}</small>
