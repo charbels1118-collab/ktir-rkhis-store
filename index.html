@@ -8,109 +8,27 @@
   <meta property="og:title" content="Ktir rkhis">
   <meta property="og:description" content="Everyday essentials at low prices — delivery all over Lebanon.">
   <title>Ktir rkhis | Online Store</title>
-  
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="topbar" id="deliveryTop">Delivery available all over Lebanon</div>
-
   <header class="header">
     <nav class="nav">
-      <a class="brand" href="#">
-        <img id="logoImg" alt="Ktir rkhis logo">
-        <strong>Ktir rkhis</strong>
-      </a>
-      <div class="search-wrap">
-        <input id="searchInput" type="search" placeholder="Search products or product code…">
-        <span class="search-icon">⌕</span>
-      </div>
+      <a class="brand" href="#"><img src="assets/logo.webp" alt="Ktir rkhis logo"><strong>Ktir rkhis</strong></a>
+      <div class="search-wrap"><input id="searchInput" type="search" placeholder="Search products or product code…"><span class="search-icon">⌕</span></div>
       <button class="lang-btn" id="langBtn"><span>🌐</span><span id="langBtnText">العربية</span></button>
       <button class="icon-btn" id="cartBtn"><span>🛒</span><span id="cartLabel">Bag</span><span class="cart-count" id="cartCount">0</span></button>
     </nav>
   </header>
-
   <main>
-    <section class="hero">
-      <div class="hero-card">
-        <div class="hero-copy">
-          <span class="pill" id="heroEyebrow">Everyday essentials • Low prices</span>
-          <h1 id="heroTitle">Big variety. Small prices.</h1>
-          <p id="heroText">Shop useful everyday products for home, car, kitchen, beauty and more — delivered all over Lebanon.</p>
-          <button class="cta" id="shopBtn">Shop now</button>
-        </div>
-        <div class="hero-art"><img id="coverImg" alt="Ktir rkhis store banner"></div>
-      </div>
-    </section>
-
-    <section class="section" id="shop">
-      <div class="section-title">
-        <div>
-          <h2 id="productsTitle">Shop products</h2>
-          <p id="productsSub"></p>
-        </div>
-      </div>
-      <div class="categories" id="categories"></div>
-      <div class="grid" id="productsGrid"></div>
-    </section>
+    <section class="hero"><div class="hero-card"><div class="hero-copy"><span class="pill" id="heroEyebrow">Everyday essentials • Low prices</span><h1 id="heroTitle">Big variety. Small prices.</h1><p id="heroText">Shop useful everyday products for home, car, kitchen, beauty and more — delivered all over Lebanon.</p><button class="cta" id="shopBtn">Shop now</button></div><div class="hero-art"><img src="assets/cover.webp" alt="Ktir rkhis store banner"></div></div></section>
+    <section class="section" id="shop"><div class="section-title"><div><h2 id="productsTitle">Shop products</h2><p id="productsSub"></p></div></div><div class="categories" id="categories"></div><div class="grid" id="productsGrid"></div></section>
   </main>
-
-  <footer class="footer">
-    <div class="footer-inner">
-      <div>
-        <h3 id="footerAboutTitle">About Ktir rkhis</h3>
-        <p id="footerAbout">Useful products, straightforward prices, and delivery across Lebanon.</p>
-        <small>© <span id="year"></span> Ktir rkhis</small>
-      </div>
-      <div>
-        <h3 id="footerShopTitle">Shop</h3>
-        <p>18 products</p>
-      </div>
-      <div>
-        <h3 id="footerDeliveryTitle">Delivery</h3>
-        <div class="delivery-badge">🚚 <span id="footerDelivery">Delivery available all over Lebanon</span> 🇱🇧</div>
-      </div>
-    </div>
-  </footer>
-
+  <footer class="footer"><div class="footer-inner"><div><h3 id="footerAboutTitle">About Ktir rkhis</h3><p id="footerAbout">Useful products, straightforward prices, and delivery across Lebanon.</p><small>© <span id="year"></span> Ktir rkhis</small></div><div><h3 id="footerShopTitle">Shop</h3><p>18 products</p></div><div><h3 id="footerDeliveryTitle">Delivery</h3><div class="delivery-badge">🚚 <span id="footerDelivery">Delivery available all over Lebanon</span> 🇱🇧</div></div></div></footer>
   <div class="overlay" id="overlay"></div>
-
-  <aside class="cart-drawer" id="cartDrawer">
-    <div class="cart-head"><h2 id="cartTitle">Your bag</h2><button class="close-btn" id="closeCart">✕</button></div>
-    <div class="cart-items" id="cartItems"></div>
-    <div class="cart-foot">
-      <div class="total-row"><span id="totalLabel">Total</span><span id="cartTotal">$0</span></div>
-      <button class="checkout-btn" id="checkoutBtn">Checkout</button>
-    </div>
-  </aside>
-
-  <section class="modal" id="checkoutModal">
-    <div class="modal-head"><h2 id="checkoutTitle">Checkout</h2><button class="close-btn" id="closeCheckout">✕</button></div>
-    <div class="modal-body">
-      <div class="form-grid">
-        <div class="field"><label id="nameLabel" for="name">Name</label><input id="name" autocomplete="name"></div>
-        <div class="field"><label id="phoneLabel" for="phone">Phone number</label><input id="phone" inputmode="tel" autocomplete="tel"></div>
-      </div>
-      <div class="field"><label id="areaLabel" for="area">Area / City</label><input id="area"></div>
-      <div class="field"><label id="addressLabel" for="address">Address / Delivery details</label><input id="address"></div>
-      <div class="field"><label id="notesLabel" for="notes">Notes (optional)</label><textarea id="notes"></textarea></div>
-      <div class="order-preview" id="orderPreview"></div>
-      <p class="notice warn" id="waWarning">Store WhatsApp number is not configured yet. The site will copy the order instead until the owner number is added in config.js.</p>
-      <div class="modal-actions">
-        <button class="secondary" id="copyOrderBtn">Copy order</button>
-        <button class="primary" id="sendOrderBtn">Send order on WhatsApp</button>
-      </div>
-    </div>
-  </section>
-
+  <aside class="cart-drawer" id="cartDrawer"><div class="cart-head"><h2 id="cartTitle">Your bag</h2><button class="close-btn" id="closeCart">✕</button></div><div class="cart-items" id="cartItems"></div><div class="cart-foot"><div class="total-row"><span id="totalLabel">Total</span><span id="cartTotal">$0</span></div><button class="checkout-btn" id="checkoutBtn">Checkout</button></div></aside>
+  <section class="modal" id="checkoutModal"><div class="modal-head"><h2 id="checkoutTitle">Checkout</h2><button class="close-btn" id="closeCheckout">✕</button></div><div class="modal-body"><div class="form-grid"><div class="field"><label id="nameLabel" for="name">Name</label><input id="name" autocomplete="name"></div><div class="field"><label id="phoneLabel" for="phone">Phone number</label><input id="phone" inputmode="tel" autocomplete="tel"></div></div><div class="field"><label id="areaLabel" for="area">Area / City</label><input id="area"></div><div class="field"><label id="addressLabel" for="address">Address / Delivery details</label><input id="address"></div><div class="field"><label id="notesLabel" for="notes">Notes (optional)</label><textarea id="notes"></textarea></div><div class="order-preview" id="orderPreview"></div><p class="notice warn" id="waWarning">Store WhatsApp number is not configured yet. The site will copy the order instead until the owner number is added in config.js.</p><div class="modal-actions"><button class="secondary" id="copyOrderBtn">Copy order</button><button class="primary" id="sendOrderBtn">Send order on WhatsApp</button></div></div></section>
   <div class="toast" id="toast"></div>
-
-  <script src="config.js"></script>
-  <script src="products.js"></script>
-  <script src="images-1.js"></script>
-  <script src="images-2.js"></script>
-  <script src="images-3.js"></script>
-  <script src="images-4.js"></script>
-  <script src="images-5.js"></script>
-  <script src="app.js"></script>
+  <script src="config.js"></script><script src="products.js"></script><script src="app.js"></script>
 </body>
 </html>
