@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="700" viewBox="0 0 900 700">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7faf7"/><stop offset="1" stop-color="#e7f3e6"/></linearGradient>
+    <linearGradient id="safe" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#4a4a4a"/><stop offset="1" stop-color="#1f1f1f"/></linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d6d6d6"/><stop offset="1" stop-color="#8d8d8d"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="18" stdDeviation="18" flood-opacity=".22"/></filter>
+  </defs>
+  <rect width="900" height="700" fill="url(#bg)"/>
+  <rect x="90" y="95" width="720" height="430" rx="26" fill="url(#safe)" filter="url(#shadow)"/>
+  <rect x="135" y="145" width="630" height="330" rx="18" fill="#111" stroke="#666" stroke-width="5"/>
+  <rect x="245" y="190" width="410" height="235" rx="16" fill="url(#panel)"/>
+  <circle cx="360" cy="305" r="72" fill="#bfbfbf" stroke="#666" stroke-width="7"/>
+  <circle cx="360" cy="305" r="43" fill="#6f6f6f"/>
+  <rect x="492" y="220" width="130" height="170" rx="10" fill="#222"/>
+  <g fill="#d6a313" stroke="#111" stroke-width="3" font-family="Arial" font-size="24" font-weight="700" text-anchor="middle">
+    <rect x="505" y="235" width="30" height="30" rx="5"/><text x="520" y="258" fill="#111">1</text>
+    <rect x="542" y="235" width="30" height="30" rx="5"/><text x="557" y="258" fill="#111">2</text>
+    <rect x="579" y="235" width="30" height="30" rx="5"/><text x="594" y="258" fill="#111">3</text>
+    <rect x="505" y="272" width="30" height="30" rx="5"/><text x="520" y="295" fill="#111">4</text>
+    <rect x="542" y="272" width="30" height="30" rx="5"/><text x="557" y="295" fill="#111">5</text>
+    <rect x="579" y="272" width="30" height="30" rx="5"/><text x="594" y="295" fill="#111">6</text>
+    <rect x="505" y="309" width="30" height="30" rx="5"/><text x="520" y="332" fill="#111">7</text>
+    <rect x="542" y="309" width="30" height="30" rx="5"/><text x="557" y="332" fill="#111">8</text>
+    <rect x="579" y="309" width="30" height="30" rx="5"/><text x="594" y="332" fill="#111">9</text>
+    <rect x="542" y="346" width="30" height="30" rx="5"/><text x="557" y="369" fill="#111">0</text>
+  </g>
+  <rect x="0" y="555" width="900" height="145" fill="#63bd4c"/>
+  <text x="55" y="612" font-family="Arial" font-size="44" font-weight="700" fill="white">Digital Steel Safe</text>
+  <text x="55" y="658" font-family="Arial" font-size="30" fill="white">Code 999151</text>
+  <text x="760" y="640" font-family="Arial" font-size="66" font-weight="700" text-anchor="middle" fill="white">$99</text>
+</svg>
