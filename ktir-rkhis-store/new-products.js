@@ -84,3 +84,16 @@ window.PRODUCTS.push({
   tags_en: ["Touch control", "LED lights", "22 × 16 cm"],
   tags_ar: ["تحكم باللمس", "إضاءة LED", "22 × 16 سم"]
 });
+
+window.PRODUCTS.push({
+  code: "999204",
+  price: 32,
+  category: "kitchen",
+  image: "assets/999204.jpg",
+  name_en: "Manual Vegetable Slicer & Grater Set",
+  name_ar: "قطّاعة ومبرشة خضار يدوية",
+  desc_en: "Manual vegetable slicer and grater with multiple interchangeable heads for slicing, grating and spiral cutting vegetables for salads and everyday cooking.",
+  desc_ar: "قطّاعة ومبرشة خضار يدوية مع عدة رؤوس قابلة للتبديل للتقطيع والبرش والسبيرال، مناسبة لتحضير السلطات والخضار بسهولة.",
+  tags_en: ["Multiple heads", "Spiral cutting", "Manual"],
+  tags_ar: ["عدة رؤوس", "تقطيع سبيرال", "يدوية"]
+});
