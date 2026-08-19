@@ -71,3 +71,16 @@ window.PRODUCTS.push({
   tags_en: ["2-in-1", "Adjustable heat", "Electric grill"],
   tags_ar: ["2 في 1", "حرارة قابلة للتعديل", "شواية كهربائية"]
 });
+
+window.PRODUCTS.push({
+  code: "290400",
+  price: 26,
+  category: "beauty",
+  image: "assets/290400.jpg",
+  name_en: "Touch LED Makeup Mirror",
+  name_ar: "مرآة مكياج LED باللمس",
+  desc_en: "Practical LED makeup mirror with touch control and a compact 22 × 16 cm tabletop design for makeup and daily beauty routines.",
+  desc_ar: "مرآة مكياج عملية مع إضاءة LED وتحكم باللمس، بقياس 22 × 16 سم وتصميم مدمج مناسب للطاولة والعناية اليومية.",
+  tags_en: ["Touch control", "LED lights", "22 × 16 cm"],
+  tags_ar: ["تحكم باللمس", "إضاءة LED", "22 × 16 سم"]
+});
