@@ -89,7 +89,7 @@ window.PRODUCTS.push({
   code: "999204",
   price: 32,
   category: "kitchen",
-  image: "assets/999204.jpg",
+  image: "assets/999204.svg",
   name_en: "Manual Vegetable Slicer & Grater Set",
   name_ar: "قطّاعة ومبرشة خضار يدوية",
   desc_en: "Manual vegetable slicer and grater with multiple interchangeable heads for slicing, grating and spiral cutting vegetables for salads and everyday cooking.",
