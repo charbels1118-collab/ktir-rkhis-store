@@ -30,16 +30,12 @@ for code in TARGETS:
     raw = base64.b64decode(found[code])
     im = Image.open(io.BytesIO(raw)).convert("RGB")
     w, h = im.size
-    # Catalogue cards contain a colored text/price strip at the bottom.
-    # Keep the real product photography and remove that strip.
     product_h = max(1, int(h * 0.70))
     im = im.crop((0, 0, w, product_h))
     im = ImageEnhance.Brightness(im).enhance(1.05)
     im = ImageEnhance.Contrast(im).enhance(1.12)
     im = ImageEnhance.Color(im).enhance(1.08)
     im = im.filter(ImageFilter.UnsharpMask(radius=1.4, percent=125, threshold=2))
-
-    # Consistent square e-commerce image without stretching the actual product.
     canvas = Image.new("RGB", (720, 720), "white")
     fitted = ImageOps.contain(im, (680, 680), Image.Resampling.LANCZOS)
     x = (720 - fitted.width) // 2
@@ -66,3 +62,4 @@ elif '<script src="app.js?v=20260820-real4"></script>' not in html:
 index.write_text(html, encoding="utf-8")
 
 print("Enhanced real JPGs:", ", ".join(TARGETS))
+# trigger 2026-08-20
