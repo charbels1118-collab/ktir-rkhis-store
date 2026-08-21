@@ -36,4 +36,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# Triggered again after GitHub Pages was enabled.
+# Forced redeploy after image replacement fix on 2026-08-21 11:13 Lebanon time.
