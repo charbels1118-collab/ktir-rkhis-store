@@ -1,0 +1,186 @@
+name: Build remaining enhanced product images
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/build-enhanced-remaining.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Pillow
+        run: python -m pip install --quiet pillow
+
+      - name: Build enhanced product images
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          from PIL import Image, ImageEnhance, ImageOps, ImageFilter, ImageDraw
+          import base64, io, re
+
+          root = Path('ktir-rkhis-store')
+          assets = root / 'assets'
+          outdir = assets / 'enhanced-auto'
+          outdir.mkdir(parents=True, exist_ok=True)
+
+          codes = [
+            '999139','999065','999151','999155','290400','999204','470100','470200',
+            '483600','483700','260100','260102','260211','260212','484810','484820',
+            '484821','260215','261103','261400','281100','230210','230221','230300',
+            '230302','211701','220100','221102','230203','290100','291100','291311',
+            '291500','200000','291501','291600','403100','410000','201200','201208',
+            '211300','211303','411000','440101','450200','470001','251100','231202'
+          ]
+
+          text_files = [root/'new-products.js', root/'products.js'] + sorted((root/'catalog-batch1').glob('*.js'))
+          texts = {p: p.read_text(encoding='utf-8', errors='ignore') for p in text_files if p.exists()}
+
+          def decode_data_uri(s):
+              m = re.search(r'data:image/(?:jpeg|jpg|png|webp);base64,([^\"\']+)', s, re.S|re.I)
+              if not m:
+                  return None
+              try:
+                  return Image.open(io.BytesIO(base64.b64decode(m.group(1)))).convert('RGB')
+              except Exception:
+                  return None
+
+          def open_svg_embedded(path):
+              try:
+                  return decode_data_uri(path.read_text(encoding='utf-8', errors='ignore'))
+              except Exception:
+                  return None
+
+          def source_for(code):
+              # Prefer a direct source asset if the product already has one.
+              for ext in ('jpg','jpeg','png','webp'):
+                  p = assets / f'{code}.{ext}'
+                  if p.exists():
+                      try:
+                          return Image.open(p).convert('RGB')
+                      except Exception:
+                          pass
+              svg = assets / f'{code}.svg'
+              if svg.exists():
+                  im = open_svg_embedded(svg)
+                  if im is not None:
+                      return im
+
+              # Otherwise read the product's embedded catalogue image.
+              for p, txt in texts.items():
+                  pos = txt.find(f'"{code}"')
+                  if pos < 0:
+                      continue
+                  # Wide enough slice for embedded image data.
+                  start = max(0, txt.rfind('window.PRODUCTS', 0, pos))
+                  end = txt.find('});', pos)
+                  if end < 0:
+                      end = min(len(txt), pos + 250000)
+                  block = txt[start:end+3]
+                  im = decode_data_uri(block)
+                  if im is not None:
+                      return im
+              return None
+
+          def enhance(im):
+              im = im.convert('RGB')
+              # Remove catalogue information bars when present by detecting saturated horizontal bands.
+              hsv = im.convert('HSV')
+              w, h = im.size
+              crop_y = h
+              px = hsv.load()
+              for y in range(int(h*0.55), max(int(h*0.55)+1, h-8)):
+                  hits = 0
+                  total = 0
+                  for yy in range(y, min(h, y+6)):
+                      for x in range(w):
+                          total += 1
+                          if px[x,yy][1] > 70:
+                              hits += 1
+                  if total and hits/total > 0.40:
+                      crop_y = max(int(h*0.52), y-3)
+                      break
+              if crop_y < h:
+                  im = im.crop((0,0,w,crop_y))
+
+              # Trim empty white margins while leaving breathing room.
+              rgb = im.convert('RGB')
+              bg = Image.new('RGB', rgb.size, (255,255,255))
+              diff = ImageOps.difference(rgb, bg).convert('L')
+              bbox = diff.point(lambda v: 255 if v > 12 else 0).getbbox()
+              if bbox:
+                  x0,y0,x1,y1 = bbox
+                  pad = max(5, int(min(rgb.size)*0.03))
+                  x0=max(0,x0-pad); y0=max(0,y0-pad); x1=min(rgb.width,x1+pad); y1=min(rgb.height,y1+pad)
+                  if (x1-x0) > rgb.width*0.30 and (y1-y0) > rgb.height*0.22:
+                      im = rgb.crop((x0,y0,x1,y1))
+
+              im = ImageEnhance.Brightness(im).enhance(1.055)
+              im = ImageEnhance.Contrast(im).enhance(1.12)
+              im = ImageEnhance.Color(im).enhance(1.12)
+              im = ImageEnhance.Sharpness(im).enhance(1.55)
+
+              canvas = Image.new('RGBA', (520,520), (250,250,248,255))
+              fitted = ImageOps.contain(im, (470,430), Image.Resampling.LANCZOS)
+              x=(520-fitted.width)//2; y=(520-fitted.height)//2
+              shadow = Image.new('RGBA', canvas.size, (0,0,0,0))
+              d=ImageDraw.Draw(shadow)
+              d.rounded_rectangle((x+5,y+9,x+fitted.width+5,y+fitted.height+9), radius=18, fill=(0,0,0,28))
+              shadow=shadow.filter(ImageFilter.GaussianBlur(11))
+              canvas=Image.alpha_composite(canvas,shadow)
+              canvas.paste(fitted,(x,y))
+              return canvas.convert('RGB')
+
+          done=[]
+          for code in codes:
+              im = source_for(code)
+              if im is None:
+                  print('SOURCE NOT FOUND', code)
+                  continue
+              out = enhance(im)
+              out.save(outdir/f'{code}.jpg', 'JPEG', quality=88, optimize=True, progressive=True)
+              done.append(code)
+              print('enhanced', code)
+
+          lines = ['(() => {', '  const map = {']
+          lines += [f'    "{c}": "assets/enhanced-auto/{c}.jpg?v=20260824-all",' for c in done]
+          lines += ['  };', '  for (const p of (window.PRODUCTS || [])) if (map[p.code]) p.image = map[p.code];', '})();', '']
+          (root/'enhanced-auto.js').write_text('\n'.join(lines), encoding='utf-8')
+
+          index = (root/'index.html').read_text(encoding='utf-8')
+          # Remove the bad all-product runtime cleaner if present.
+          index = re.sub(r'\s*<script src="runtime-clean-images\.js[^\"]*\"></script>', '', index)
+          # Ensure the auto-enhanced pack overrides the older crop-only batches but does not replace the real generated batch 5 images.
+          tag = '  <script src="enhanced-auto.js?v=20260824-all"></script>\n'
+          if 'enhanced-auto.js' not in index:
+              marker = '  <script src="generated-images-batch5.js?v=20260824-restore"></script>\n'
+              if marker in index:
+                  index = index.replace(marker, tag + marker)
+              else:
+                  index = index.replace('  <script src="app.js', tag + '  <script src="app.js')
+          (root/'index.html').write_text(index, encoding='utf-8')
+          print('Generated', len(done), 'enhanced images')
+          PY
+
+      - name: Commit enhanced images to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ktir-rkhis-store/assets/enhanced-auto ktir-rkhis-store/enhanced-auto.js ktir-rkhis-store/index.html
+          git diff --cached --quiet || git commit -m "Add enhanced images for all remaining products"
+          git push
