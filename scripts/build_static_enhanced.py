@@ -4,7 +4,12 @@ import io
 import json
 import re
 
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageFile
+
+# Some of the old catalogue JPEG/WebP data stored in the original site is
+# slightly truncated but browsers still display it. Pillow normally rejects
+# those streams, so allow them here in order to rebuild clean static images.
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "ktir-rkhis-store"
@@ -12,7 +17,6 @@ PRODUCTS = SITE / "products.js"
 OUT = SITE / "assets" / "static-enhanced"
 OUT.mkdir(parents=True, exist_ok=True)
 
-# These are the catalogue-style photos that were still visibly unchanged.
 TARGETS = [
     "251100","260100","260102","260211","260212","260215","261103","261400",
     "281100","290100","291100","291311","291500","291501","291600","403100",
@@ -32,15 +36,19 @@ by_code = {str(p.get("code")): p for p in products}
 def open_source(src: str) -> Image.Image:
     if src.startswith("data:image/"):
         payload = src.split(",", 1)[1]
-        return Image.open(io.BytesIO(base64.b64decode(payload))).convert("RGB")
+        payload += "=" * (-len(payload) % 4)
+        raw = base64.b64decode(payload)
+        with Image.open(io.BytesIO(raw)) as source:
+            source.load()
+            return source.convert("RGB")
     clean = src.split("?", 1)[0]
     path = SITE / clean
-    return Image.open(path).convert("RGB")
+    with Image.open(path) as source:
+        source.load()
+        return source.convert("RGB")
 
 
 def soften_catalogue_watermark(im: Image.Image) -> Image.Image:
-    # Work at a moderate resolution. The catalogue watermark is a low-saturation
-    # grey diagonal; lighten only those pixels inside its usual diagonal band.
     work = ImageOps.contain(im, (900, 900), Image.Resampling.LANCZOS)
     px = work.load()
     w, h = work.size
@@ -48,7 +56,6 @@ def soften_catalogue_watermark(im: Image.Image) -> Image.Image:
         for x in range(w):
             r, g, b = px[x, y]
             mx, mn = max(r, g, b), min(r, g, b)
-            # Broad diagonal running bottom-left to upper-right.
             center = -0.72 * x + h * 1.08
             if abs(y - center) < h * 0.13 and (mx - mn) < 34 and 85 < mx < 238:
                 blend = 0.78
@@ -70,9 +77,8 @@ for code in TARGETS:
     im = open_source(str(p["image"]))
     w, h = im.size
 
-    # The original catalogue template places the actual product photo in the
-    # upper ~61% and the coloured description/price card below it. Remove the
-    # lower catalogue section completely, making a visibly different image.
+    # Strip the entire catalogue description + price section. This is a real
+    # pixel crop done before publication, not a browser-side CSS/filter effect.
     if h / max(w, 1) > 0.82:
         photo_h = max(1, int(h * 0.61))
         im = im.crop((0, 0, w, photo_h))
@@ -93,11 +99,10 @@ for code in TARGETS:
 if missing:
     raise SystemExit("Missing source images: " + ", ".join(missing))
 
-# Override product image paths BEFORE app.js renders the product cards.
 map_lines = ["(() => {", "  const m = {"]
 for i, code in enumerate(TARGETS):
     comma = "," if i < len(TARGETS) - 1 else ""
-    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static"{comma}')
+    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static2"{comma}')
 map_lines += [
     "  };",
     "  for (const p of (window.PRODUCTS || [])) if (m[p.code]) p.image = m[p.code];",
@@ -106,14 +111,12 @@ map_lines += [
 ]
 (SITE / "static-enhanced-images.js").write_text("\n".join(map_lines), encoding="utf-8")
 
-# Build the deploy-time HTML. Remove the old browser-side enhancer and load
-# the static mapping before app.js so the new JPGs are used from first render.
 index = SITE / "index.html"
 html = index.read_text(encoding="utf-8")
 html = re.sub(r'\n\s*<script src="enhance-rest-live\.js[^\"]*\"></script>', '', html)
 html = re.sub(r'\n\s*<script src="static-enhanced-images\.js[^\"]*\"></script>', '', html)
 html = re.sub(r'<script src="app\.js[^\"]*\"></script>',
-              '<script src="static-enhanced-images.js?v=20260826-static"></script>\n  <script src="app.js?v=20260826-static"></script>',
+              '<script src="static-enhanced-images.js?v=20260826-static2"></script>\n  <script src="app.js?v=20260826-static2"></script>',
               html)
 index.write_text(html, encoding="utf-8")
 
