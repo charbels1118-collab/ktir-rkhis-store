@@ -36,10 +36,24 @@ for src_file in sorted((SITE / "catalog-batch1").glob("*.js")) + [SITE / "new-pr
             source_b64[code] = m.group(1)
 
 
-def decode_catalogue(code: str) -> Image.Image:
-    payload = source_b64[code].strip()
+def decode_bytes(payload: str) -> bytes:
+    payload = payload.strip()
     payload += "=" * (-len(payload) % 4)
-    raw = base64.b64decode(payload)
+    return base64.b64decode(payload)
+
+
+def decode_catalogue(code: str) -> Image.Image:
+    raw = decode_bytes(source_b64[code])
+    with Image.open(io.BytesIO(raw)) as source:
+        source.load()
+        return source.convert("RGB")
+
+
+def read_fallback(code: str) -> Image.Image | None:
+    fallback = OUT / f"{code}.jpg.b64"
+    if not fallback.exists():
+        return None
+    raw = decode_bytes(fallback.read_text(encoding="utf-8"))
     with Image.open(io.BytesIO(raw)) as source:
         source.load()
         return source.convert("RGB")
@@ -68,20 +82,28 @@ built = []
 failed = []
 for code in TARGETS:
     try:
-        if code not in source_b64:
-            raise ValueError("source not found")
-        im = decode_catalogue(code)
-        w, h = im.size
-        im = im.crop((0, 0, w, max(1, int(h * 0.61))))
-        im = soften_watermark(im)
-        im = ImageEnhance.Brightness(im).enhance(1.08)
-        im = ImageEnhance.Contrast(im).enhance(1.14)
-        im = ImageEnhance.Color(im).enhance(1.10)
-        im = im.filter(ImageFilter.UnsharpMask(radius=1.35, percent=140, threshold=2))
+        # Prefer the original catalogue data. If that source is corrupt, use
+        # the verified preprocessed fallback committed for that product.
+        try:
+            if code not in source_b64:
+                raise ValueError("catalogue source not found")
+            im = decode_catalogue(code)
+            w, h = im.size
+            im = im.crop((0, 0, w, max(1, int(h * 0.61))))
+            im = soften_watermark(im)
+            im = ImageEnhance.Brightness(im).enhance(1.08)
+            im = ImageEnhance.Contrast(im).enhance(1.14)
+            im = ImageEnhance.Color(im).enhance(1.10)
+            im = im.filter(ImageFilter.UnsharpMask(radius=1.35, percent=140, threshold=2))
 
-        canvas = Image.new("RGB", (760, 760), "white")
-        fitted = ImageOps.contain(im, (715, 715), Image.Resampling.LANCZOS)
-        canvas.paste(fitted, ((760-fitted.width)//2, (760-fitted.height)//2))
+            canvas = Image.new("RGB", (760, 760), "white")
+            fitted = ImageOps.contain(im, (715, 715), Image.Resampling.LANCZOS)
+            canvas.paste(fitted, ((760-fitted.width)//2, (760-fitted.height)//2))
+        except Exception as catalogue_error:
+            canvas = read_fallback(code)
+            if canvas is None:
+                raise catalogue_error
+
         canvas.save(OUT / f"{code}.jpg", "JPEG", quality=89, optimize=True, progressive=True)
         built.append(code)
         print("BUILT", code)
@@ -95,7 +117,7 @@ if not built:
 map_lines = ["(() => {", "  const m = {"]
 for i, code in enumerate(built):
     comma = "," if i < len(built)-1 else ""
-    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static4"{comma}')
+    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static5"{comma}')
 map_lines += [
     "  };",
     "  for (const p of (window.PRODUCTS || [])) if (m[p.code]) p.image = m[p.code];",
@@ -110,7 +132,7 @@ html = re.sub(r'\n\s*<script src="enhance-rest-live\.js[^\"]*\"></script>', '', 
 html = re.sub(r'\n\s*<script src="static-enhanced-images\.js[^\"]*\"></script>', '', html)
 html = re.sub(
     r'<script src="app\.js[^\"]*\"></script>',
-    '<script src="static-enhanced-images.js?v=20260826-static4"></script>\n  <script src="app.js?v=20260826-static4"></script>',
+    '<script src="static-enhanced-images.js?v=20260826-static5"></script>\n  <script src="app.js?v=20260826-static5"></script>',
     html,
 )
 index.write_text(html, encoding="utf-8")
