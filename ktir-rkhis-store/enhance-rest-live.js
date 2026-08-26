@@ -1,7 +1,6 @@
 (() => {
   const TARGET = new Set([
-    "251100","260100","260102","260211","260212","260215","261103","261400",
-    "281100","290100","291100","291311","291500","291501","291600","403100",
+    "291100","291311","291500","291501","291600","403100",
     "410000","411000","440101","450200","470001","470100","470200","483600",
     "483700","484810","484820","484821"
   ]);
@@ -22,21 +21,14 @@
       const sw = im.naturalWidth || im.width;
       const sh = im.naturalHeight || im.height;
       if (!sw || !sh) return;
-
-      // Catalogue cards are nearly square but have a description/price strip at the bottom.
-      // Keep only the photo area for those cards; already-clean wide/square photos stay intact.
       const looksLikeCatalogue = sh / sw > 0.82;
       const sourceH = looksLikeCatalogue ? Math.max(1, Math.floor(sh * 0.68)) : sh;
-
-      // Work on a reduced canvas for speed.
       const workW = 780;
       const workH = Math.max(1, Math.round(sourceH * workW / sw));
       const work = document.createElement('canvas');
       work.width = workW; work.height = workH;
       const wctx = work.getContext('2d', { willReadFrequently: true });
       wctx.drawImage(im, 0, 0, sw, sourceH, 0, 0, workW, workH);
-
-      // Lighten the common diagonal grey catalogue watermark while preserving colored products.
       const data = wctx.getImageData(0, 0, workW, workH);
       const d = data.data;
       for (let y = 0; y < workH; y++) {
@@ -48,7 +40,6 @@
           const inBand = Math.abs(y - center) < 105;
           const grey = (max - min) < 32 && max > 80 && max < 238;
           if (inBand && grey) {
-            // Blend strongly toward white instead of hard-erasing, avoiding obvious holes.
             d[i]   = Math.min(255, r + (255-r) * 0.72);
             d[i+1] = Math.min(255, g + (255-g) * 0.72);
             d[i+2] = Math.min(255, b + (255-b) * 0.72);
@@ -56,7 +47,6 @@
         }
       }
       wctx.putImageData(data, 0, 0);
-
       const out = document.createElement('canvas');
       out.width = 700; out.height = 700;
       const octx = out.getContext('2d');
@@ -66,7 +56,6 @@
       const dw = Math.round(workW * scale), dh = Math.round(workH * scale);
       octx.drawImage(work, (700-dw)/2, (700-dh)/2, dw, dh);
       octx.filter = 'none';
-
       const url = out.toDataURL('image/jpeg', 0.91);
       processed.set(p.code, url);
       p.image = url;
@@ -93,7 +82,6 @@
     });
   }
 
-  // Process sequentially and yield between items so the page stays responsive.
   (async () => {
     for (const p of P) {
       if (!TARGET.has(p.code)) continue;
