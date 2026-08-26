@@ -6,9 +6,6 @@ import re
 
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageFile
 
-# Some of the old catalogue JPEG/WebP data stored in the original site is
-# slightly truncated but browsers still display it. Pillow normally rejects
-# those streams, so allow them here in order to rebuild clean static images.
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -24,26 +21,38 @@ TARGETS = [
     "483700","484810","484820","484821"
 ]
 
-text = PRODUCTS.read_text(encoding="utf-8")
-start = text.find("[")
-end = text.rfind("]")
-if start < 0 or end < start:
-    raise SystemExit("Could not parse products.js")
-products = json.loads(text[start:end + 1])
-by_code = {str(p.get("code")): p for p in products}
+# Read the intact original catalogue entries instead of the later consolidated
+# products.js image strings. Some consolidated base64 strings were corrupted by
+# previous upload/transform passes, while these original catalogue files render
+# correctly and are the authoritative source images.
+source_b64 = {}
+source_files = sorted((SITE / "catalog-batch1").glob("*.js"))
+source_files += [SITE / "new-products.js"]
+for src_file in source_files:
+    if not src_file.exists():
+        continue
+    src_text = src_file.read_text(encoding="utf-8")
+    for code in TARGETS:
+        if code in source_b64:
+            continue
+        pattern = (
+            rf'code\s*:\s*["\']{re.escape(code)}["\'].*?'
+            rf'image\s*:\s*["\']data:image/(?:jpeg|jpg|png|webp);base64,([^"\']+)["\']'
+        )
+        m = re.search(pattern, src_text, re.S)
+        if m:
+            source_b64[code] = m.group(1)
+
+missing_sources = [c for c in TARGETS if c not in source_b64]
+if missing_sources:
+    raise SystemExit("Original catalogue source missing for: " + ", ".join(missing_sources))
 
 
-def open_source(src: str) -> Image.Image:
-    if src.startswith("data:image/"):
-        payload = src.split(",", 1)[1]
-        payload += "=" * (-len(payload) % 4)
-        raw = base64.b64decode(payload)
-        with Image.open(io.BytesIO(raw)) as source:
-            source.load()
-            return source.convert("RGB")
-    clean = src.split("?", 1)[0]
-    path = SITE / clean
-    with Image.open(path) as source:
+def decode_catalogue(code: str) -> Image.Image:
+    payload = source_b64[code].strip()
+    payload += "=" * (-len(payload) % 4)
+    raw = base64.b64decode(payload)
+    with Image.open(io.BytesIO(raw)) as source:
         source.load()
         return source.convert("RGB")
 
@@ -58,7 +67,7 @@ def soften_catalogue_watermark(im: Image.Image) -> Image.Image:
             mx, mn = max(r, g, b), min(r, g, b)
             center = -0.72 * x + h * 1.08
             if abs(y - center) < h * 0.13 and (mx - mn) < 34 and 85 < mx < 238:
-                blend = 0.78
+                blend = 0.80
                 px[x, y] = (
                     int(r + (255-r) * blend),
                     int(g + (255-g) * blend),
@@ -67,42 +76,32 @@ def soften_catalogue_watermark(im: Image.Image) -> Image.Image:
     return work
 
 
-missing = []
 for code in TARGETS:
-    p = by_code.get(code)
-    if not p or not p.get("image"):
-        missing.append(code)
-        continue
-
-    im = open_source(str(p["image"]))
+    im = decode_catalogue(code)
     w, h = im.size
 
-    # Strip the entire catalogue description + price section. This is a real
-    # pixel crop done before publication, not a browser-side CSS/filter effect.
-    if h / max(w, 1) > 0.82:
-        photo_h = max(1, int(h * 0.61))
-        im = im.crop((0, 0, w, photo_h))
+    # Catalogue template: the useful product photo is at the top; the lower
+    # coloured Arabic description and price panels are removed permanently.
+    photo_h = max(1, int(h * 0.61))
+    im = im.crop((0, 0, w, photo_h))
 
     im = soften_catalogue_watermark(im)
-    im = ImageEnhance.Brightness(im).enhance(1.07)
-    im = ImageEnhance.Contrast(im).enhance(1.13)
+    im = ImageEnhance.Brightness(im).enhance(1.08)
+    im = ImageEnhance.Contrast(im).enhance(1.14)
     im = ImageEnhance.Color(im).enhance(1.10)
-    im = im.filter(ImageFilter.UnsharpMask(radius=1.3, percent=135, threshold=2))
+    im = im.filter(ImageFilter.UnsharpMask(radius=1.35, percent=140, threshold=2))
 
     canvas = Image.new("RGB", (760, 760), "white")
-    fitted = ImageOps.contain(im, (710, 710), Image.Resampling.LANCZOS)
+    fitted = ImageOps.contain(im, (715, 715), Image.Resampling.LANCZOS)
     x = (760 - fitted.width) // 2
     y = (760 - fitted.height) // 2
     canvas.paste(fitted, (x, y))
-    canvas.save(OUT / f"{code}.jpg", "JPEG", quality=88, optimize=True, progressive=True)
-
-if missing:
-    raise SystemExit("Missing source images: " + ", ".join(missing))
+    canvas.save(OUT / f"{code}.jpg", "JPEG", quality=89, optimize=True, progressive=True)
 
 map_lines = ["(() => {", "  const m = {"]
 for i, code in enumerate(TARGETS):
     comma = "," if i < len(TARGETS) - 1 else ""
-    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static2"{comma}')
+    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static3"{comma}')
 map_lines += [
     "  };",
     "  for (const p of (window.PRODUCTS || [])) if (m[p.code]) p.image = m[p.code];",
@@ -115,9 +114,11 @@ index = SITE / "index.html"
 html = index.read_text(encoding="utf-8")
 html = re.sub(r'\n\s*<script src="enhance-rest-live\.js[^\"]*\"></script>', '', html)
 html = re.sub(r'\n\s*<script src="static-enhanced-images\.js[^\"]*\"></script>', '', html)
-html = re.sub(r'<script src="app\.js[^\"]*\"></script>',
-              '<script src="static-enhanced-images.js?v=20260826-static2"></script>\n  <script src="app.js?v=20260826-static2"></script>',
-              html)
+html = re.sub(
+    r'<script src="app\.js[^\"]*\"></script>',
+    '<script src="static-enhanced-images.js?v=20260826-static3"></script>\n  <script src="app.js?v=20260826-static3"></script>',
+    html,
+)
 index.write_text(html, encoding="utf-8")
 
-print(f"Built {len(TARGETS)} static enhanced JPGs")
+print("Built static enhanced JPGs from original catalogue files:", ", ".join(TARGETS))
