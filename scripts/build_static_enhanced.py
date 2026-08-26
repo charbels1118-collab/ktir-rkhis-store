@@ -50,13 +50,23 @@ def decode_catalogue(code: str) -> Image.Image:
 
 
 def read_fallback(code: str) -> Image.Image | None:
-    fallback = OUT / f"{code}.jpg.b64"
-    if not fallback.exists():
-        return None
-    raw = decode_bytes(fallback.read_text(encoding="utf-8"))
-    with Image.open(io.BytesIO(raw)) as source:
-        source.load()
-        return source.convert("RGB")
+    # Prefer the compact fallback when present; this avoids GitHub/API
+    # truncation of a legacy oversized base64 text fallback.
+    candidates = [
+        OUT / f"{code}-small.jpg.b64",
+        OUT / f"{code}.jpg.b64",
+    ]
+    for fallback in candidates:
+        if not fallback.exists():
+            continue
+        try:
+            raw = decode_bytes(fallback.read_text(encoding="utf-8"))
+            with Image.open(io.BytesIO(raw)) as source:
+                source.load()
+                return source.convert("RGB")
+        except Exception:
+            continue
+    return None
 
 
 def soften_watermark(im: Image.Image) -> Image.Image:
@@ -82,8 +92,6 @@ built = []
 failed = []
 for code in TARGETS:
     try:
-        # Prefer the original catalogue data. If that source is corrupt, use
-        # the verified preprocessed fallback committed for that product.
         try:
             if code not in source_b64:
                 raise ValueError("catalogue source not found")
@@ -117,7 +125,7 @@ if not built:
 map_lines = ["(() => {", "  const m = {"]
 for i, code in enumerate(built):
     comma = "," if i < len(built)-1 else ""
-    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static5"{comma}')
+    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static6"{comma}')
 map_lines += [
     "  };",
     "  for (const p of (window.PRODUCTS || [])) if (m[p.code]) p.image = m[p.code];",
@@ -132,7 +140,7 @@ html = re.sub(r'\n\s*<script src="enhance-rest-live\.js[^\"]*\"></script>', '', 
 html = re.sub(r'\n\s*<script src="static-enhanced-images\.js[^\"]*\"></script>', '', html)
 html = re.sub(
     r'<script src="app\.js[^\"]*\"></script>',
-    '<script src="static-enhanced-images.js?v=20260826-static5"></script>\n  <script src="app.js?v=20260826-static5"></script>',
+    '<script src="static-enhanced-images.js?v=20260826-static6"></script>\n  <script src="app.js?v=20260826-static6"></script>',
     html,
 )
 index.write_text(html, encoding="utf-8")
