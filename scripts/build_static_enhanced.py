@@ -3,7 +3,7 @@ import base64
 import io
 import re
 
-from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageFile
+from PIL import Image, ImageEnhance, ImageFilter, ImageOps, ImageFile, ImageDraw
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -12,8 +12,14 @@ SITE = ROOT / "ktir-rkhis-store"
 OUT = SITE / "assets" / "static-enhanced"
 OUT.mkdir(parents=True, exist_ok=True)
 
-# Products 251100 through 290100 now use real generated replacement images
-# from next10-generated.js. Do NOT rebuild/overwrite them from catalogue photos here.
+# These 10 get a visibly redesigned e-commerce treatment in this build.
+PREMIUM = {
+    "291100","291311","291500","291501","291600",
+    "403100","410000","411000","440101","450200"
+}
+
+# Products 251100 through 290100 use the generated replacement pack and are
+# intentionally excluded here so this build cannot overwrite them.
 TARGETS = [
     "291100","291311","291500","291501","291600","403100",
     "410000","411000","440101","450200","470001","470100","470200","483600",
@@ -69,7 +75,7 @@ def read_fallback(code: str) -> Image.Image | None:
 
 
 def soften_watermark(im: Image.Image) -> Image.Image:
-    work = ImageOps.contain(im, (900, 900), Image.Resampling.LANCZOS)
+    work = ImageOps.contain(im, (1000, 1000), Image.Resampling.LANCZOS)
     px = work.load()
     w, h = work.size
     for y in range(h):
@@ -77,14 +83,60 @@ def soften_watermark(im: Image.Image) -> Image.Image:
             r, g, b = px[x, y]
             mx, mn = max(r, g, b), min(r, g, b)
             center = -0.72 * x + h * 1.08
-            if abs(y - center) < h * 0.13 and (mx - mn) < 34 and 85 < mx < 238:
-                blend = 0.80
+            if abs(y - center) < h * 0.14 and (mx - mn) < 38 and 75 < mx < 242:
+                blend = 0.88
                 px[x, y] = (
                     int(r + (255-r) * blend),
                     int(g + (255-g) * blend),
                     int(b + (255-b) * blend),
                 )
     return work
+
+
+def premium_canvas(im: Image.Image) -> Image.Image:
+    """Make a visibly different, clean square e-commerce presentation."""
+    size = 820
+
+    # Soft background derived from the product photo, then washed toward white.
+    bg = ImageOps.fit(im, (size, size), Image.Resampling.LANCZOS)
+    bg = bg.filter(ImageFilter.GaussianBlur(30))
+    bg = ImageEnhance.Brightness(bg).enhance(1.28)
+    bg = ImageEnhance.Color(bg).enhance(0.72)
+    wash = Image.new("RGB", (size, size), (250, 250, 252))
+    bg = Image.blend(bg, wash, 0.58)
+
+    # Foreground image sits on a rounded floating card.
+    fitted = ImageOps.contain(im, (720, 560), Image.Resampling.LANCZOS)
+    card_w = fitted.width + 54
+    card_h = fitted.height + 54
+    card = Image.new("RGBA", (card_w, card_h), (0, 0, 0, 0))
+    mask = Image.new("L", (card_w, card_h), 0)
+    md = ImageDraw.Draw(mask)
+    md.rounded_rectangle((0, 0, card_w-1, card_h-1), radius=34, fill=255)
+
+    white = Image.new("RGBA", (card_w, card_h), (255, 255, 255, 246))
+    white.putalpha(mask)
+    card.alpha_composite(white)
+    card.alpha_composite(fitted.convert("RGBA"), ((card_w-fitted.width)//2, (card_h-fitted.height)//2))
+
+    # Soft shadow under the card.
+    shadow = Image.new("RGBA", (card_w+50, card_h+50), (0,0,0,0))
+    sd = ImageDraw.Draw(shadow)
+    sd.rounded_rectangle((25, 25, 25+card_w, 25+card_h), radius=38, fill=(0,0,0,55))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(20))
+
+    out = bg.convert("RGBA")
+    sx = (size-shadow.width)//2
+    sy = (size-shadow.height)//2 + 12
+    out.alpha_composite(shadow, (sx, sy))
+    cx = (size-card_w)//2
+    cy = (size-card_h)//2 - 8
+    out.alpha_composite(card, (cx, cy))
+
+    # Thin highlight frame makes the change obvious but stays clean.
+    draw = ImageDraw.Draw(out)
+    draw.rounded_rectangle((18,18,size-19,size-19), radius=38, outline=(255,255,255,210), width=4)
+    return out.convert("RGB")
 
 
 built = []
@@ -96,24 +148,28 @@ for code in TARGETS:
                 raise ValueError("catalogue source not found")
             im = decode_catalogue(code)
             w, h = im.size
+            # Remove the catalogue description / price strip entirely.
             im = im.crop((0, 0, w, max(1, int(h * 0.61))))
             im = soften_watermark(im)
-            im = ImageEnhance.Brightness(im).enhance(1.08)
-            im = ImageEnhance.Contrast(im).enhance(1.14)
-            im = ImageEnhance.Color(im).enhance(1.10)
-            im = im.filter(ImageFilter.UnsharpMask(radius=1.35, percent=140, threshold=2))
+            im = ImageEnhance.Brightness(im).enhance(1.10)
+            im = ImageEnhance.Contrast(im).enhance(1.18)
+            im = ImageEnhance.Color(im).enhance(1.12)
+            im = im.filter(ImageFilter.UnsharpMask(radius=1.45, percent=155, threshold=2))
 
-            canvas = Image.new("RGB", (760, 760), "white")
-            fitted = ImageOps.contain(im, (715, 715), Image.Resampling.LANCZOS)
-            canvas.paste(fitted, ((760-fitted.width)//2, (760-fitted.height)//2))
+            if code in PREMIUM:
+                canvas = premium_canvas(im)
+            else:
+                canvas = Image.new("RGB", (760, 760), "white")
+                fitted = ImageOps.contain(im, (715, 715), Image.Resampling.LANCZOS)
+                canvas.paste(fitted, ((760-fitted.width)//2, (760-fitted.height)//2))
         except Exception as catalogue_error:
             canvas = read_fallback(code)
             if canvas is None:
                 raise catalogue_error
 
-        canvas.save(OUT / f"{code}.jpg", "JPEG", quality=89, optimize=True, progressive=True)
+        canvas.save(OUT / f"{code}.jpg", "JPEG", quality=91, optimize=True, progressive=True)
         built.append(code)
-        print("BUILT", code)
+        print("BUILT", code, "PREMIUM" if code in PREMIUM else "STANDARD")
     except Exception as exc:
         failed.append(code)
         print("SKIPPED", code, repr(exc))
@@ -124,7 +180,7 @@ if not built:
 map_lines = ["(() => {", "  const m = {"]
 for i, code in enumerate(built):
     comma = "," if i < len(built)-1 else ""
-    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static7"{comma}')
+    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static8"{comma}')
 map_lines += [
     "  };",
     "  for (const p of (window.PRODUCTS || [])) if (m[p.code]) p.image = m[p.code];",
@@ -139,7 +195,7 @@ html = re.sub(r'\n\s*<script src="enhance-rest-live\.js[^\"]*\"></script>', '', 
 html = re.sub(r'\n\s*<script src="static-enhanced-images\.js[^\"]*\"></script>', '', html)
 html = re.sub(
     r'<script src="app\.js[^\"]*\"></script>',
-    '<script src="static-enhanced-images.js?v=20260826-static7"></script>\n  <script src="app.js?v=20260826-static7"></script>',
+    '<script src="static-enhanced-images.js?v=20260826-static8"></script>\n  <script src="app.js?v=20260826-static8"></script>',
     html,
 )
 index.write_text(html, encoding="utf-8")
