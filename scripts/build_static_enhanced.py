@@ -12,9 +12,10 @@ SITE = ROOT / "ktir-rkhis-store"
 OUT = SITE / "assets" / "static-enhanced"
 OUT.mkdir(parents=True, exist_ok=True)
 
+# Products 251100 through 290100 now use real generated replacement images
+# from next10-generated.js. Do NOT rebuild/overwrite them from catalogue photos here.
 TARGETS = [
-    "251100","260100","260102","260211","260212","260215","261103","261400",
-    "281100","290100","291100","291311","291500","291501","291600","403100",
+    "291100","291311","291500","291501","291600","403100",
     "410000","411000","440101","450200","470001","470100","470200","483600",
     "483700","484810","484820","484821"
 ]
@@ -50,8 +51,6 @@ def decode_catalogue(code: str) -> Image.Image:
 
 
 def read_fallback(code: str) -> Image.Image | None:
-    # Prefer the compact fallback when present; this avoids GitHub/API
-    # truncation of a legacy oversized base64 text fallback.
     candidates = [
         OUT / f"{code}-small.jpg.b64",
         OUT / f"{code}.jpg.b64",
@@ -125,7 +124,7 @@ if not built:
 map_lines = ["(() => {", "  const m = {"]
 for i, code in enumerate(built):
     comma = "," if i < len(built)-1 else ""
-    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static6"{comma}')
+    map_lines.append(f'    "{code}": "assets/static-enhanced/{code}.jpg?v=20260826-static7"{comma}')
 map_lines += [
     "  };",
     "  for (const p of (window.PRODUCTS || [])) if (m[p.code]) p.image = m[p.code];",
@@ -140,7 +139,7 @@ html = re.sub(r'\n\s*<script src="enhance-rest-live\.js[^\"]*\"></script>', '', 
 html = re.sub(r'\n\s*<script src="static-enhanced-images\.js[^\"]*\"></script>', '', html)
 html = re.sub(
     r'<script src="app\.js[^\"]*\"></script>',
-    '<script src="static-enhanced-images.js?v=20260826-static6"></script>\n  <script src="app.js?v=20260826-static6"></script>',
+    '<script src="static-enhanced-images.js?v=20260826-static7"></script>\n  <script src="app.js?v=20260826-static7"></script>',
     html,
 )
 index.write_text(html, encoding="utf-8")
